@@ -141,12 +141,7 @@ userSchema.methods.getUserByEmail = (email) => {
   input: pass string, email string, username string, dob date
   output: user object
 */
-userSchema.methods.createUser = (
-  pass,
-  email,
-  username,
-  dob
-) => {
+userSchema.methods.createUser = (pass, email, username, dob) => {
   return bcrypt
     .genSalt(10)
     .then((salt) => {
@@ -206,7 +201,9 @@ userSchema.methods.getUserByID = (userID) => {
     _id: program id, 
     name: program name string, 
     ownerName: owner name string, 
-    lastOpened: owner last opened date
+    lastOpened: owner last opened date,
+    editorPermissions: boolean whether the program as editor permission
+    role: "owner", "viewer", "editor", or "none"
   }]
 */
 userSchema.methods.getProgramListStaggered = (userID, index, inc) => {
@@ -232,6 +229,17 @@ userSchema.methods.getProgramListStaggered = (userID, index, inc) => {
           name: program._id.name,
           ownerName: program._id.owner.username,
           lastOpened: program.date,
+          editorPermissions:
+            program._id.owner._id.toString() === userID.toString() ||
+            program._id.editors.includes(userID),
+          role:
+            program._id.owner._id.toString() === userID.toString()
+              ? "owner"
+              : program._id.viewers.includes(userID)
+              ? "viewer"
+              : program._id.editors.includes(userID)
+              ? "editor"
+              : "none",
         }));
 
       return programs;
